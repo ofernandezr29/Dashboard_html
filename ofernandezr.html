@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF_8" />
+        <title>Dashboard E-commerce</title>
+        <script src="https://cdn.jsdelivr.net/npm/chat.js"></script>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+        <h1>Visualizaciones E-commerce</h1>
+
+        <h2>1. Ingresos por Categoría (SVG)</h2>
+        <svg width="400" height="150"></svg>
+
+        <h2>2. Pedidos por Canal (Canvas)</h2>
+        <canvas id="canvasCanal" width="400" height="300"></canvas>
+        <script>
+            const canvas = document.getElementById("canvasCanal");
+            const ctx = canvas.getContext("2d");
+            const data = [42.34, 57.66];
+            const etiquetas = ["Web", "App"];
+            const colores = ["#4287f5", "#abc8f5"];
+            const total = data.reduce((a, b) => a + b, 0);
+            let anguloInicial = 90;
+            data.forEach((valor, i) => {
+                const angulo = (valor / total) * Math.PI * 2;
+
+                ctx.beginPath();
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 100, anguloInicial, anguloInicial + angulo);
+                ctx.closePath();
+
+                ctx.fillStyle = colores[i];
+                ctx.fill();
+
+                anguloInicial += angulo;
+            });
+
+            const startX = 270;
+            let startY = 50;
+            etiquetas.forEach((etiqueta, i) => {
+                ctx.fillStyle = colores[i];
+                ctx.fillRect(startX, startY, 15, 15);
+
+                ctx.fillStyle = "black";
+                ctx.font = "14px Arial";
+                ctx.fillText(etiqueta, startX + 25, startY + 12);
+
+                startY += 25;
+            });
+        </script>
+
+        <h2>3. Estado de los Pedidos (Chart.js)</h2>
+        <div>
+            <canvas id="myChartJs"></canvas>
+        </div>
+
+        <h2>4. Segmentacion de Clientes (D3.js)</h2>
+        <div id="d3_container"></div>
+    </body>
+</html>
