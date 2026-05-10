@@ -1,106 +1,320 @@
 <!doctype html>
-<html>
-    <head>
-        <meta charset="UTF_8" />
-        <title>Dashboard E-commerce</title>
-        <script src="https://cdn.jsdelivr.net/npm/chat.js"></script>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
-    </head>
+<html lang="es">
     <body>
-        <h1>Visualizaciones E-commerce</h1>
+        <h2>Dashboard Ecommerce</h2>
 
-        <h2>1. Ingresos por Categoría (SVG)</h2>
-        <svg id="grafico" width="500" height="300"></svg>
+        <table width="100%" cellspacing="16">
+            <tr>
+                <td valign="top" width="50%">
+                    <b>1. Top categorías por ingresos — SVG</b><br /><br />
+                    <svg id="svg-cat" width="100%" height="220"></svg>
+                </td>
+                <td valign="top" width="50%">
+                    <b>2. Evolución mensual 2025 — Chart.js</b><br /><br />
+                    <div style="position: relative; height: 200px">
+                        <canvas
+                            id="chart-mensual"
+                            role="img"
+                            aria-label="Ingresos mensuales 2025"
+                            >Cargando...</canvas
+                        >
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td valign="top">
+                    <b>3. Distribución de ratings — Canvas</b><br /><br />
+                    <canvas
+                        id="canvas-ratings"
+                        width="440"
+                        height="200"
+                        role="img"
+                        aria-label="Ratings del 1 al 5"
+                        >Cargando...</canvas
+                    >
+                </td>
+                <td valign="top">
+                    <b>4. Motivos de devolución — D3.js</b><br /><br />
+                    <div id="d3-dev"></div>
+                </td>
+            </tr>
+        </table>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
         <script>
-            const svg = document.getElementById("grafico");
-            const datos = [146, 28.2, 25, 12.8, 7.46, 7.1, 3.15];
-            const etiquetas = [
-                "Electrónica",
-                "Videojuegos",
-                "Hogar y Cocina",
-                "Juguetes y Juegos",
-                "Belleza",
-                "Deportes",
-                "Alimentacion y Bebidas",
-            ];
+            const DATA = {
+                categorias: [
+                    { label: "Electrónica", value: 1463149 },
+                    { label: "Videojuegos", value: 282491 },
+                    { label: "Hogar y cocina", value: 250336 },
+                    { label: "Juguetes y juegos", value: 128493 },
+                    { label: "Belleza", value: 74637 },
+                    { label: "Deportes", value: 71062 },
+                    { label: "Alimentación y bebidas", value: 31545 },
+                ],
+                mensual: [
+                    99420, 72028, 80259, 78112, 89043, 93204, 151040, 99631,
+                    94480, 130237, 154512, 196980,
+                ],
+                ratings: [
+                    { star: 1, count: 79 },
+                    { star: 2, count: 84 },
+                    { star: 3, count: 245 },
+                    { star: 4, count: 1159 },
+                    { star: 5, count: 1164 },
+                ],
+                motivos: [
+                    { label: "Producto defectuoso", value: 147 },
+                    { label: "Embalaje dañado", value: 87 },
+                    { label: "Llegó tarde", value: 81 },
+                    { label: "No era lo que esperaba", value: 73 },
+                    { label: "Mejor precio en otra tienda", value: 68 },
+                    { label: "No cumple expectativas", value: 61 },
+                    { label: "Regalo duplicado", value: 41 },
+                ],
+            };
 
-            const anchoBarra = 40;
-            const espacio = 20;
-            const escala = 2;
+            // ── 1. SVG: Top categorías ──────────────────────────────────
+            (function () {
+                const sorted = DATA.categorias;
+                const max = sorted[0].value;
+                const svg = document.getElementById("svg-cat");
+                const ns = "http://www.w3.org/2000/svg";
+                const colors = [
+                    "#185FA5",
+                    "#378ADD",
+                    "#1D9E75",
+                    "#5DCAA5",
+                    "#D85A30",
+                    "#EF9F27",
+                    "#888",
+                ];
+                const BAR_X = 140,
+                    BAR_MAX_W = 240,
+                    ROW_H = 26,
+                    PAD_Y = 10;
 
-            datos.forEach((valor, i) => {
-                const x = i * (anchoBarra + espacio) + 70;
-                const alto = valor * escala;
-                const y = 200 - alto;
+                sorted.forEach(({ label, value }, i) => {
+                    const y = PAD_Y + i * ROW_H;
+                    const bw = (value / max) * BAR_MAX_W;
 
-                const rect = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "rect",
-                );
-                rect.setAttribute("x", x);
-                rect.setAttribute("y", y);
-                rect.setAttribute("width", anchoBarra);
-                rect.setAttribute("height", alto);
-                rect.setAttribute("fill", "steelblue");
+                    const t = document.createElementNS(ns, "text");
+                    t.setAttribute("x", BAR_X - 4);
+                    t.setAttribute("y", y + 13);
+                    t.setAttribute("text-anchor", "end");
+                    t.setAttribute("font-size", "11");
+                    t.setAttribute("fill", "#555");
+                    t.textContent = label;
+                    svg.appendChild(t);
 
-                svg.appendChild(rect);
+                    const rect = document.createElementNS(ns, "rect");
+                    rect.setAttribute("x", BAR_X);
+                    rect.setAttribute("y", y);
+                    rect.setAttribute("width", bw);
+                    rect.setAttribute("height", 16);
+                    rect.setAttribute("rx", 2);
+                    rect.setAttribute("fill", colors[i] || "#aaa");
+                    svg.appendChild(rect);
 
-                const texto = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "text",
-                );
-                texto.setAttribute("x", x + 10);
-                texto.setAttribute("y", 220);
-                texto.textContent = etiquetas[i];
+                    const v = document.createElementNS(ns, "text");
+                    v.setAttribute("x", BAR_X + bw + 5);
+                    v.setAttribute("y", y + 13);
+                    v.setAttribute("font-size", "11");
+                    v.setAttribute("fill", "#333");
+                    v.textContent = "€" + Math.round(value / 1000) + "K";
+                    svg.appendChild(v);
+                });
 
-                svg.appendChild(texto);
+                const axisY = PAD_Y + sorted.length * ROW_H + 4;
+                const axis = document.createElementNS(ns, "line");
+                axis.setAttribute("x1", BAR_X);
+                axis.setAttribute("y1", axisY);
+                axis.setAttribute("x2", BAR_X + BAR_MAX_W);
+                axis.setAttribute("y2", axisY);
+                axis.setAttribute("stroke", "#ddd");
+                axis.setAttribute("stroke-width", "1");
+                svg.appendChild(axis);
+                svg.setAttribute("height", axisY + 20);
+            })();
+
+            // ── 2. Chart.js: Evolución mensual ─────────────────────────
+            new Chart(document.getElementById("chart-mensual"), {
+                type: "line",
+                data: {
+                    labels: [
+                        "Ene",
+                        "Feb",
+                        "Mar",
+                        "Abr",
+                        "May",
+                        "Jun",
+                        "Jul",
+                        "Ago",
+                        "Sep",
+                        "Oct",
+                        "Nov",
+                        "Dic",
+                    ],
+                    datasets: [
+                        {
+                            label: "Ingresos €",
+                            data: DATA.mensual,
+                            borderColor: "#185FA5",
+                            backgroundColor: "rgba(24,95,165,0.08)",
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { font: { size: 10 } } },
+                        y: {
+                            ticks: {
+                                callback: (v) =>
+                                    "€" + Math.round(v / 1000) + "K",
+                                font: { size: 10 },
+                            },
+                        },
+                    },
+                },
             });
-        </script>
 
-        <h2>2. Pedidos por Canal (Canvas)</h2>
-        <canvas id="canvasCanal" width="400" height="300"></canvas>
-        <script>
-            const canvas = document.getElementById("canvasCanal");
-            const ctx = canvas.getContext("2d");
-            const data = [42.34, 57.66];
-            const etiquetas = ["Web", "App"];
-            const colores = ["#4287f5", "#abc8f5"];
-            const total = data.reduce((a, b) => a + b, 0);
-            let anguloInicial = 90;
-            data.forEach((valor, i) => {
-                const angulo = (valor / total) * Math.PI * 2;
+            // ── 3. Canvas: Ratings ──────────────────────────────────────
+            (function () {
+                const canvas = document.getElementById("canvas-ratings");
+                const ctx = canvas.getContext("2d");
+                const W = canvas.width,
+                    H = canvas.height;
+                const PAD_L = 40,
+                    PAD_R = 60,
+                    PAD_T = 20,
+                    PAD_B = 30;
+                const chartW = W - PAD_L - PAD_R,
+                    chartH = H - PAD_T - PAD_B;
+                const max = Math.max(...DATA.ratings.map((r) => r.count));
+                const barW = chartW / DATA.ratings.length - 10;
+                const colors = [
+                    "#E24B4A",
+                    "#E24B4A",
+                    "#EF9F27",
+                    "#185FA5",
+                    "#185FA5",
+                ];
 
+                DATA.ratings.forEach(({ star, count }, i) => {
+                    const bh = (count / max) * chartH;
+                    const x = PAD_L + i * (barW + 10);
+                    const y = PAD_T + chartH - bh;
+
+                    ctx.fillStyle = colors[i];
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, barW, bh, 3);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#555";
+                    ctx.font = "11px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText(star + "★", x + barW / 2, H - PAD_B + 16);
+
+                    ctx.fillStyle = "#333";
+                    ctx.font = "bold 11px sans-serif";
+                    ctx.fillText(count, x + barW / 2, y - 5);
+                });
+
+                ctx.strokeStyle = "#ddd";
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 100, anguloInicial, anguloInicial + angulo);
-                ctx.closePath();
+                ctx.moveTo(PAD_L, H - PAD_B);
+                ctx.lineTo(W - PAD_R, H - PAD_B);
+                ctx.stroke();
+            })();
 
-                ctx.fillStyle = colores[i];
-                ctx.fill();
+            // ── 4. D3: Motivos devolución ───────────────────────────────
+            (function () {
+                const top7 = DATA.motivos;
+                const W = 460,
+                    PAD_L = 160,
+                    PAD_R = 50,
+                    PAD_T = 10,
+                    PAD_B = 20;
+                const chartW = W - PAD_L - PAD_R;
+                const ROW_H = 28;
+                const H = PAD_T + top7.length * ROW_H + PAD_B;
+                const colors = [
+                    "#E24B4A",
+                    "#E24B4A",
+                    "#EF9F27",
+                    "#185FA5",
+                    "#185FA5",
+                    "#185FA5",
+                    "#185FA5",
+                ];
 
-                anguloInicial += angulo;
-            });
+                const svg = d3
+                    .select("#d3-dev")
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr("transform", `translate(${PAD_L},${PAD_T})`);
 
-            const startX = 270;
-            let startY = 50;
-            etiquetas.forEach((etiqueta, i) => {
-                ctx.fillStyle = colores[i];
-                ctx.fillRect(startX, startY, 15, 15);
+                const x = d3
+                    .scaleLinear()
+                    .domain([0, top7[0].value])
+                    .range([0, chartW]);
+                const y = d3
+                    .scaleBand()
+                    .domain(top7.map((d) => d.label))
+                    .range([0, H - PAD_T - PAD_B])
+                    .padding(0.3);
 
-                ctx.fillStyle = "black";
-                ctx.font = "14px Arial";
-                ctx.fillText(etiqueta, startX + 25, startY + 12);
+                g.selectAll("rect")
+                    .data(top7)
+                    .join("rect")
+                    .attr("y", (d) => y(d.label))
+                    .attr("height", y.bandwidth())
+                    .attr("width", (d) => x(d.value))
+                    .attr("rx", 2)
+                    .attr("fill", (d, i) => colors[i]);
 
-                startY += 25;
-            });
+                g.selectAll(".lbl")
+                    .data(top7)
+                    .join("text")
+                    .attr("class", "lbl")
+                    .attr("x", -5)
+                    .attr("y", (d) => y(d.label) + y.bandwidth() * 0.75)
+                    .attr("text-anchor", "end")
+                    .attr("font-size", 11)
+                    .attr("fill", "#555")
+                    .text((d) => d.label);
+
+                g.selectAll(".val")
+                    .data(top7)
+                    .join("text")
+                    .attr("class", "val")
+                    .attr("x", (d) => x(d.value) + 5)
+                    .attr("y", (d) => y(d.label) + y.bandwidth() * 0.75)
+                    .attr("font-size", 11)
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#333")
+                    .text((d) => d.value);
+
+                g.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", H - PAD_T - PAD_B)
+                    .attr("x2", chartW)
+                    .attr("y2", H - PAD_T - PAD_B)
+                    .attr("stroke", "#ddd")
+                    .attr("stroke-width", 1);
+            })();
         </script>
-
-        <h2>3. Estado de los Pedidos (Chart.js)</h2>
-        <div>
-            <canvas id="myChartJs"></canvas>
-        </div>
-
-        <h2>4. Segmentacion de Clientes (D3.js)</h2>
-        <div id="d3_container"></div>
     </body>
 </html>
